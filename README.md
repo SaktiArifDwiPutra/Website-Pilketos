@@ -60,28 +60,27 @@ Proyek ini bertujuan untuk:
 
 ---
 
-## 🧩 Struktur Role (Visual Diagram)
+## 🔄 Alur Sistem Voting
 
-```mermaid
-flowchart TD
-    A[🔐 Login Page] -->|Role: Admin| B[⚙️ Admin Dashboard]
-    A -->|Role: Guru| C[👨‍🏫 Guru Dashboard]
-    A -->|Role: Siswa| D[👨‍🎓 Siswa Dashboard]
+flowchart LR
+  A[👤 User Login\n(Siswa / Guru / Admin)] --> B{Validasi Role}
 
-    B --> B1[👥 Kelola Akun<br>(Guru & Siswa)]
-    B --> B2[🧾 Kelola Data Paslon]
-    B --> B3[📊 Lihat Hasil Voting<br>(Diagram & Tabel)]
-    B --> B4[🔑 Ubah Password Admin]
+  B -->|Admin| C[⚙️ Admin Dashboard]
+  B -->|Guru / Siswa| D[🏫 Halaman Utama]
 
-    C --> C1[👋 Sambutan: 'Selamat Datang, Guru!']
-    C --> C2[🗳️ Halaman Voting]
-    C --> C3[📄 Deskripsi & Motivasi]
+  %% ADMIN FLOW
+  C --> C1[👥 Kelola Akun]
+  C --> C2[🧾 Kelola Paslon]
+  C --> C3[📊 Lihat Hasil Voting]
+  C --> C4[🔑 Ubah Password]
 
-    D --> D1[👋 Sambutan: 'Selamat Datang, Siswa!']
-    D --> D2[🗳️ Halaman Voting]
-    D --> D3[📄 Deskripsi & Motivasi]
+  %% USER FLOW
+  D --> D1[📄 Lihat Deskripsi & Motivasi]
+  D --> D2[🗳️ Akses Halaman Voting]
+  D2 --> D3[✅ Pilih Paslon & Submit]
+  D3 --> E[(💾 Data Masuk ke Database)]
+  E --> F[📊 Tampil di Dashboard Admin]
 
----
 
 ## 🖼️ Preview (Optional)
 
