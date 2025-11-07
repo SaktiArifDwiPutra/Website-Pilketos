@@ -61,13 +61,42 @@ Proyek ini bertujuan untuk:
 ---
 
 
-## 🖼️ Preview (Optional)
+## 🖼️ Preview
 
 > <p align="center">
 >   <img src="assets/demo-vote.png" alt="Voting Page Preview" width="600"/>
 > </p>
 
 ---
+
+## 👥 User Guide
+
+<h2>Local Instalation</h2>
+<ol>
+	<li>Download Laragon/XAMPP/AMPPS atau sejenisnya dan install</li>
+	<li>Jalankan <b>Apache</b> dan <b>Mysql</b></li>
+	<li>Copy File <b>Website-pilketos.zip</b> ke Folder <b>C://xampp/htdocs/</b>, <b>C://laragon/www/</b>, <b>C://ampps/www/</b> lalu extract</li>
+</ol>
+<br/>
+<h2>Creating Database</h2>
+<ol>
+	<li>Masuk ke Browser kemudian tulis di Address Bar http://localhost/phpmyadmin</li>
+	<li>Buat Database dengan Nama <b>pemilihan_osis</b></li>
+	<li>Import Database <b>pemilihan_osis.sql</b> <a href="https://www.domainesia.com/panduan/cara-import-database-mysql-di-phpmyadmin/" target="_blank">Tutorial Disini</a></li>
+</ol>
+<br/>
+
+<h2>Akses Aplikasi</h2>
+<b>Akses Admin</b>
+<ul> 
+	<li>Masuk ke Browser kemudian tulis di address bar <b>http://localhost/pemilihan_osis/</b></li>
+	<li>Login dengan menggunakan <b>Username = admin</b> dan <b>Password = admin</b></li> 
+</ul>
+<b>Akses User </b>
+<ul> 
+	<li>Masuk Ke Browser kemudian tulis di address bar <b>http://localhost/pilketos</b></li>
+	<li>Login dengan menggunakan <b>Username dan Password </b>yang telah di INPUT oleh Admin sebelumnya</li>
+</ul>
 
 ## 🧑‍💻 Pengembang
 
