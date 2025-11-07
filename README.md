@@ -1,33 +1,86 @@
-##🗳️ Pilketos Web App
+<h1 align="center">🗳️ Pilketos Web App</h1>
 
-Pilketos Web App adalah sistem pemilihan ketua OSIS berbasis web yang dirancang untuk mempermudah proses pemungutan suara secara digital di lingkungan sekolah. Website ini dibangun menggunakan PHP, HTML, CSS, dan JavaScript dengan sistem autentikasi multi-role untuk admin, guru, dan siswa.
+<p align="center">
+  <i>Sistem Pemilihan Ketua OSIS Digital Berbasis Web</i><br>
+  Dibangun menggunakan <b>PHP</b>, <b>HTML</b>, <b>CSS</b>, dan <b>JavaScript</b>
+</p>
 
-⚙️ Fitur Utama
+---
 
-🔐 Multi-role Login System — Role admin, guru, dan siswa dengan sambutan yang disesuaikan.
+## 📖 Deskripsi
 
-📋 Voting Page Interaktif — Menampilkan foto, visi misi, dan program kerja unggulan tiap paslon, serta tombol vote yang mudah digunakan.
+**Pilketos Web App** adalah sistem pemilihan ketua OSIS berbasis web yang dirancang untuk mempermudah proses pemungutan suara secara digital di lingkungan sekolah.  
+Website ini memiliki sistem autentikasi multi-role untuk **Admin**, **Guru**, dan **Siswa**.
 
-🧮 Dashboard Admin
+---
 
-Kelola akun pengguna (tambah akun guru/siswa).
+## ⚙️ Fitur Utama
 
-Tambah dan ubah data paslon.
+- 🔐 **Multi-role Login System**  
+  Role admin, guru, dan siswa dengan sambutan berbeda:  
+  - Guru → *Selamat datang, Guru!*  
+  - Siswa → *Selamat datang, Siswa!*  
 
-Lihat hasil voting dalam bentuk diagram dan tabel real-time.
+- 📋 **Halaman Voting Interaktif**  
+  Menampilkan:
+  - Foto kandidat  
+  - Visi & misi  
+  - Program kerja unggulan  
+  - Tombol **Vote**  
 
-💬 Halaman Motivasi & Edukatif — Berisi kata-kata penyemangat untuk mendorong partisipasi siswa dalam demokrasi sekolah.
+- 🧮 **Dashboard Admin**  
+  - Ubah password  
+  - Tambah akun (guru/siswa)  
+  - Tambah/ubah data paslon  
+  - Lihat hasil voting dalam bentuk **diagram dan tabel real-time**  
 
-🧠 Tujuan Pengembangan
+- 💬 **Halaman Edukatif & Motivatif**  
+  Menampilkan deskripsi dan pesan untuk mendorong partisipasi siswa dalam demokrasi sekolah.
 
-Proyek ini dibuat untuk mendigitalisasi proses pemilihan ketua OSIS, meningkatkan efisiensi, serta mengurangi potensi kecurangan dalam proses voting manual. Selain itu, proyek ini juga melatih kemampuan dalam pengembangan web full-stack sederhana dengan implementasi autentikasi, CRUD, dan visualisasi data.
+---
 
-🛠️ Tech Stack
+## 🧠 Tujuan Pengembangan
 
-Frontend: HTML, CSS, JavaScript
+Proyek ini bertujuan untuk:
+- Mendigitalisasi proses pemilihan ketua OSIS  
+- Meningkatkan transparansi dan efisiensi pemungutan suara  
+- Melatih kemampuan pengembangan **web full-stack sederhana**  
+- Mengimplementasikan autentikasi, CRUD, dan visualisasi data  
 
-Backend: PHP (Native)
+---
 
-Database: MySQL
+## 🛠️ Tech Stack
 
-Hosting: (Sementara nonaktif, sebelumnya digunakan hosting sekolah selama periode Pilketos berlangsung)
+| Kategori | Teknologi |
+|-----------|------------|
+| **Frontend** | HTML, CSS, JavaScript |
+| **Backend** | PHP (Native) |
+| **Database** | MySQL |
+| **Hosting** | Sebelumnya dihosting di server sekolah selama periode Pilketos |
+
+---
+
+## 🧩 Struktur Role
+
+
+---
+
+## 🖼️ Preview (Optional)
+
+> <p align="center">
+>   <img src="assets/demo-vote.png" alt="Voting Page Preview" width="600"/>
+> </p>
+
+---
+
+## 🧑‍💻 Pengembang
+
+**Sakti Arif Dwi Putra**  
+💼 *Backend & Fullstack Developer (Entry Level)*  
+📍 Indonesia  
+
+---
+
+<p align="center">
+  © 2025 Pilketos Web App — Dibuat untuk digitalisasi pemilihan OSIS sekolah
+</p>
