@@ -62,17 +62,21 @@ Proyek ini bertujuan untuk:
 
 ## 🧩 Struktur Role (Visual Diagram)
 
+```mermaid
 flowchart TD
     A[🔐 Login Page] -->|Role: Admin| B[⚙️ Admin Dashboard]
     A -->|Role: Guru| C[👨‍🏫 Guru Dashboard]
     A -->|Role: Siswa| D[👨‍🎓 Siswa Dashboard]
+
     B --> B1[👥 Kelola Akun<br>(Guru & Siswa)]
     B --> B2[🧾 Kelola Data Paslon]
     B --> B3[📊 Lihat Hasil Voting<br>(Diagram & Tabel)]
     B --> B4[🔑 Ubah Password Admin]
+
     C --> C1[👋 Sambutan: 'Selamat Datang, Guru!']
     C --> C2[🗳️ Halaman Voting]
     C --> C3[📄 Deskripsi & Motivasi]
+
     D --> D1[👋 Sambutan: 'Selamat Datang, Siswa!']
     D --> D2[🗳️ Halaman Voting]
     D --> D3[📄 Deskripsi & Motivasi]
