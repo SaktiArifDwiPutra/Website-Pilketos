@@ -60,27 +60,6 @@ Proyek ini bertujuan untuk:
 
 ---
 
-## 🔄 Alur Sistem Voting
-
-flowchart LR
-  A[👤 User Login\n(Siswa / Guru / Admin)] --> B{Validasi Role}
-
-  B -->|Admin| C[⚙️ Admin Dashboard]
-  B -->|Guru / Siswa| D[🏫 Halaman Utama]
-
-  %% ADMIN FLOW
-  C --> C1[👥 Kelola Akun]
-  C --> C2[🧾 Kelola Paslon]
-  C --> C3[📊 Lihat Hasil Voting]
-  C --> C4[🔑 Ubah Password]
-
-  %% USER FLOW
-  D --> D1[📄 Lihat Deskripsi & Motivasi]
-  D --> D2[🗳️ Akses Halaman Voting]
-  D2 --> D3[✅ Pilih Paslon & Submit]
-  D3 --> E[(💾 Data Masuk ke Database)]
-  E --> F[📊 Tampil di Dashboard Admin]
-
 
 ## 🖼️ Preview (Optional)
 
