@@ -2,137 +2,133 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= isset($page_title) ? $page_title : 'Pemilihan Ketua OSIS' ?></title>
     
-    <!-- FAVICON -->
     <link rel="shortcut icon" href="<?= BASE_URL ?>/assets/img/favicon.ico" type="image/x-icon">
     <link rel="icon" href="<?= BASE_URL ?>/assets/img/favicon.png" type="image/png">
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css?v=1">
+    
     <style>
         :root {
-            --navbar-bg-dark: #2c3e50;
-            --panel-bg: #343a40; 
+            /* Warna Modern Indigo - Ungu */
+            --navbar-bg-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --navbar-mobile-bg: rgba(30, 27, 75, 0.95);
             --text-light: #ffffff;
-            --text-hover: rgba(255, 255, 255, 0.75);
-            --danger-color: #e74c3c;
+            --text-hover: rgba(255, 255, 255, 0.8);
+            --danger-color: #ef4444; 
+            --danger-hover: #dc2626;
         }
+
+        body { font-family: 'Inter', sans-serif; }
 
         .navbar {
             position: relative;
             z-index: 1030;
-        }
-        .navbar-custom {
-            background-color: var(--navbar-bg-dark) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        @media (max-width: 991.98px) {
-            .navbar .container {
-                align-items: center; 
-            }
+        .navbar-custom {
+            background: var(--navbar-bg-gradient) !important;
+        }
+        
+        .navbar.shadow-sm {
+            box-shadow: 0 4px 20px -2px rgba(79, 70, 229, 0.3) !important;
         }
 
         .navbar-brand {
             letter-spacing: .2px;
-            font-weight: 600;
+            font-weight: 700;
         }
+        
         .navbar-brand span.fs-5 {
             font-size: 1.15rem !important;
             line-height: 1.2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .navbar-brand i { font-size: 1.3rem; }
+
         .navbar-brand .brand-title-small {
             display: inline;
-            font-size: 0.9em;
-            font-weight: 400;
-            opacity: 0.8;
-            margin-left: 0.25rem;
+            font-size: 0.85em;
+            font-weight: 500;
+            opacity: 0.9;
         }
+
         @media (min-width: 576px) {
-            .navbar-brand span.fs-5 {
-                font-size: 1.25rem !important; 
-            }
-            .navbar-brand .brand-title-small {
-                display: none;
-            }
+            .navbar-brand span.fs-5 { font-size: 1.25rem !important; }
+            .navbar-brand .brand-title-small { display: none; }
         }
         @media (min-width: 768px) {
-            .navbar-brand span.fs-5 {
-                font-size: 1.5rem !important;
-            }
+            .navbar-brand span.fs-5 { font-size: 1.4rem !important; }
         }
 
         .navbar .nav-link {
-            padding: .45rem .8rem;
+            padding: .5rem 1rem;
             font-weight: 500;
-            transition: color .15s ease-in-out, background-color .15s ease-in-out;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            transition: all .2s ease-in-out;
         }
-        .navbar .btn {
-            padding: .28rem .8rem;
-            border-radius: .35rem;
-            font-size: .9rem;
-            box-sizing: border-box;
-        }
-        .navbar.shadow-sm {
-            box-shadow: 0 0 15px rgba(0, 0, 0, .4);
+        
+        .navbar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: var(--text-light) !important;
+            transform: translateY(-1px);
         }
 
         .btn-logout-filled.btn-danger {
             background-color: var(--danger-color) !important;
-            border-color: var(--danger-color) !important;
-            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.4);
+            border: none !important;
+            border-radius: 8px;
+            padding: .45rem 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
         }
+        
         .btn-logout-filled.btn-danger:hover {
-            background-color: #c0392b !important;
-            border-color: #c0392b !important;
+            background-color: var(--danger-hover) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(239, 68, 68, 0.4);
         }
         
         .navbar-toggler {
-            padding: .35rem .5rem;
             border: none;
-            outline: none;
-            transition: transform .18s ease;
-        }
-        .navbar-toggler:focus {
-            box-shadow: 0 0 0 .25rem rgba(255, 255, 255, .2);
-        }
-        .navbar-toggler-icon {
-            width: 1.25rem;
-            height: 1.25rem;
-            background-size: 100% 100%;
-        }
-        .navbar-toggler.active .navbar-toggler-icon {
-            transform: rotate(90deg);
+            padding: 0.5rem;
+            background: transparent;
         }
         
+        .navbar-toggler:focus { box-shadow: none; outline: none; }
+        
+        /* Mobile Menu Layout Custom */
         @media (max-width: 991.98px) {
-            .navbar .container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
             .navbar-collapse {
+                display: block !important; /* Paksa tampil untuk animasi */
                 position: absolute;
-                top: 100%;
+                top: calc(100% + 10px);
                 right: 1rem;
-                left: auto;
-                min-width: 180px;
-                max-width: calc(100% - 2rem);
-                width: max-content;
-                
-                background: linear-gradient(135deg, #2c3e50 0%, #1a2530 100%); 
-                
-                padding: .75rem;
-                border-radius: 8px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, .4);
+                left: 1rem;
+                background: var(--navbar-mobile-bg);
+                backdrop-filter: blur(10px); 
+                -webkit-backdrop-filter: blur(10px);
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 
                 opacity: 0;
                 visibility: hidden;
-                transform: translateY(10px);
-                transform-origin: top right;
-                transition: opacity .25s ease, transform .25s ease, visibility .25s;
-                z-index: 1050;
+                transform: translateY(-10px);
+                transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
             }
 
             .navbar-collapse.show {
@@ -142,49 +138,14 @@
             }
 
             .navbar-collapse .navbar-nav {
-                display: flex;
-                flex-direction: column;
-                align-items: stretch;
-                gap: .4rem;
-                width: 100%;
-                margin-left: 0 !important;
+                gap: 0.5rem;
             }
 
             .navbar-collapse .nav-link,
             .navbar-collapse .btn {
                 width: 100%;
                 text-align: left;
-                padding: .6rem .8rem;
-                color: var(--text-light);
-                white-space: nowrap;
-                border-radius: 6px;
-                box-sizing: border-box;
-            }
-            
-            .navbar-collapse .nav-link:hover,
-            .navbar-collapse .nav-link:focus,
-            .navbar-collapse .btn:hover:not(.btn-danger),
-            .navbar-collapse .btn:focus:not(.btn-danger) {
-                background-color: rgba(255, 255, 255, .1);
-                color: var(--text-light);
-            }
-            
-            .navbar-collapse .btn-logout-filled {
-                margin-top: .4rem;
-            }
-        }
-
-        @media (min-width: 992px) {
-            .navbar-collapse {
-                position: static;
-                background: transparent;
-                padding: 0;
-                opacity: 1;
-                transform: none;
-                visibility: visible;
-            }
-            .navbar-nav {
-                gap: 0.5rem;
+                padding: .75rem 1rem;
             }
         }
     </style>
@@ -194,52 +155,35 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm py-2">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="<?= BASE_URL ?>/">
-                <span class="fs-5 fw-semibold">
-                    Pemilihan Wakil 
-                    <span class="d-sm-none brand-title-small">& Ketua OSIS 2025/2026</span>
-                    <span class="d-none d-sm-inline">& Ketua OSIS 2025/2026</span>
+                <span class="fs-5 text-white">
+                    <i class="fa-solid fa-box-archive"></i> Pemilihan 
+                    <span class="d-sm-none brand-title-small">Ketua OSIS</span>
+                    <span class="d-none d-sm-inline">Wakil & Ketua OSIS 25/26</span>
                 </span>
             </a>
-            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+            
+            <button class="navbar-toggler ms-auto" type="button" id="menuTogglerBtn">
+                <i class="fa-solid fa-bars text-white fs-4"></i>
             </button>
-            <div class="collapse navbar-collapse" id="mainNavbar">
+            
+            <div class="navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <?php if ($_SESSION['role'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/admin/dashboard.php">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/admin/tambah_calon.php">Tambah Calon</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/admin/tambah_akun.php">Tambah Akun</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/admin/hasil.php">Hasil</a>
-                            </li>
-                        <?php elseif ($_SESSION['role'] === 'guru'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/user/dashboard.php">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/user/vote_guru.php">Vote</a>
-                            </li>
-                        <?php else: // Peran selain admin dan guru, diasumsikan Siswa ?>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/user/dashboard.php">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" href="<?= BASE_URL ?>/user/vote.php">Vote</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/admin/dashboard.php"><i class="fa-solid fa-gauge me-1"></i> Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/admin/tambah_calon.php"><i class="fa-solid fa-user-plus me-1"></i> Calon</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/admin/tambah_akun.php"><i class="fa-solid fa-users-gear me-1"></i> Akun</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/admin/hasil.php"><i class="fa-solid fa-chart-pie me-1"></i> Hasil</a></li>
+                        <?php else: ?>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/user/dashboard.php"><i class="fa-solid fa-house me-1"></i> Beranda</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" href="<?= BASE_URL ?>/user/vote<?= $_SESSION['role'] === 'guru' ? '_guru' : '' ?>.php"><i class="fa-solid fa-check-to-slot me-1"></i> Vote</a></li>
                         <?php endif; ?>
-                        <li class="nav-item">
-                            <a class="btn btn-danger btn-logout-filled" href="<?= BASE_URL ?>/keluar.php">Logout</a>
+                        <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                            <a class="btn btn-danger btn-logout-filled" href="<?= BASE_URL ?>/keluar.php"><i class="fa-solid fa-right-from-bracket me-1"></i> Keluar</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link text-white" href="<?= BASE_URL ?>/masuk.php">Login</a>
+                            <a class="nav-link text-white" href="<?= BASE_URL ?>/masuk.php"><i class="fa-solid fa-right-to-bracket me-1"></i> Masuk</a>
                         </li>
                     <?php endif; ?>
                 </ul>
@@ -247,25 +191,45 @@
         </div>
     </nav>
 </header>
-<main class="container">
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var toggler = document.querySelector('.navbar-toggler');
-    var collapse = document.getElementById('mainNavbar');
+    var togglerBtn = document.getElementById('menuTogglerBtn');
+    var myCollapse = document.getElementById('mainNavbar');
+    var togglerIcon = togglerBtn ? togglerBtn.querySelector('i') : null;
 
-    if (!toggler || !collapse) return;
+    if (!togglerBtn || !myCollapse || !togglerIcon) return;
 
-    collapse.addEventListener('show.bs.collapse', function() {
-        toggler.classList.add('active');
-        toggler.setAttribute('aria-expanded', 'true');
+    // Kendali manual 100% tanpa campur tangan Bootstrap
+    togglerBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Cegah event klik merembet
+        
+        myCollapse.classList.toggle('show');
+        
+        // Ganti Ikon
+        if (myCollapse.classList.contains('show')) {
+            togglerIcon.classList.remove('fa-bars');
+            togglerIcon.classList.add('fa-xmark');
+        } else {
+            togglerIcon.classList.remove('fa-xmark');
+            togglerIcon.classList.add('fa-bars');
+        }
     });
 
-    collapse.addEventListener('hide.bs.collapse', function() {
-        toggler.classList.remove('active');
-        toggler.setAttribute('aria-expanded', 'false');
+    // Menutup menu jika user mengeklik di luar area menu
+    document.addEventListener('click', function(event) {
+        var isClickInsideMenu = myCollapse.contains(event.target);
+        var isClickOnButton = togglerBtn.contains(event.target);
+
+        if (!isClickInsideMenu && !isClickOnButton && myCollapse.classList.contains('show')) {
+            myCollapse.classList.remove('show');
+            togglerIcon.classList.remove('fa-xmark');
+            togglerIcon.classList.add('fa-bars');
+        }
     });
 });
 </script>
-</body>
-</html>
+
+<main class="container">
