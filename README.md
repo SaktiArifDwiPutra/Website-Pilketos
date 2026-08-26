@@ -64,7 +64,9 @@ Proyek ini bertujuan untuk:
 ## 🖼️ Preview
 
 > <p align="center">
->   <img src="assets/demo-vote.png" alt="Voting Page Preview" width="600"/>
+>   <img src="assets/login.png" alt="Voting Page Preview" width="600"/>
+>   <img src="assets/dashboard.png" alt="Voting Page Preview" width="600"/>
+>   <img src="assets/demo.png" alt="Voting Page Preview" width="600"/>
 > </p>
 
 ---
