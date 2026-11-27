@@ -3,9 +3,11 @@
 .env.local
 .env.*.local
 
-# Dependencies
-/vendor/
-/node_modules/
+# Dependencies & Build Outputs
+vendor/
+node_modules/
+dist/
+*.tsbuildinfo
 
 # OS & Editor Files
 .DS_Store
