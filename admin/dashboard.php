@@ -10,21 +10,8 @@ $page_title = "Dashboard Admin";
 $total_kandidat = $pdo->query("SELECT COUNT(*) FROM candidates")->fetchColumn();
 $total_pemilih = $pdo->query("SELECT COUNT(*) FROM users WHERE role IN ('siswa', 'guru')")->fetchColumn();
 $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= $page_title ?></title>
-    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/img/favicon.ico">
-    <link rel="stylesheet" href="../assets/css/style.css?v=3">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+$extra_head = <<<'HTML'
     <style>
         :root {
             --primary: #4f46e5;
@@ -192,9 +179,9 @@ $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
             gap: 10px;
         }
     </style>
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
+HTML;
+include '../includes/header.php';
+?>
     
     <div class="dashboard-header text-center">
         <div class="container">
@@ -207,36 +194,36 @@ $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
         <div class="row g-4 mb-5">
             
             <div class="col-12 col-md-4">
-                <div class="menu-card h-100 text-center" onclick="window.location.href='tambah_calon.php'">
+                <a href="tambah_calon.php" class="menu-card h-100 text-center d-block text-decoration-none">
                     <div class="icon-box bg-icon-primary">
                         <i class="fa-solid fa-user-tie"></i>
                     </div>
                     <h5 class="card-title">Kandidat OSIS</h5>
                     <p class="card-text">Kelola data calon ketua dan wakil ketua OSIS.</p>
                     <span class="stat-badge"><i class="fa-solid fa-users me-1"></i> <?= $total_kandidat ?> Terdaftar</span>
-                </div>
+                </a>
             </div>
 
             <div class="col-12 col-md-4">
-                <div class="menu-card h-100 text-center" onclick="window.location.href='tambah_akun.php'">
+                <a href="tambah_akun.php" class="menu-card h-100 text-center d-block text-decoration-none">
                     <div class="icon-box bg-icon-success">
                         <i class="fa-solid fa-id-card-clip"></i>
                     </div>
                     <h5 class="card-title">Akun Pemilih</h5>
                     <p class="card-text">Buat dan kelola akun akses untuk siswa/guru.</p>
                     <span class="stat-badge"><i class="fa-solid fa-key me-1"></i> <?= $total_pemilih ?> Akun</span>
-                </div>
+                </a>
             </div>
 
             <div class="col-12 col-md-4">
-                <div class="menu-card h-100 text-center" onclick="window.location.href='hasil.php'">
+                <a href="hasil.php" class="menu-card h-100 text-center d-block text-decoration-none">
                     <div class="icon-box bg-icon-danger">
                         <i class="fa-solid fa-chart-pie"></i>
                     </div>
                     <h5 class="card-title">Hasil Live</h5>
                     <p class="card-text">Pantau perolehan suara secara real-time.</p>
                     <span class="stat-badge"><i class="fa-solid fa-check-to-slot me-1"></i> <?= $suara_masuk ?> Suara Masuk</span>
-                </div>
+                </a>
             </div>
 
         </div>
@@ -265,6 +252,7 @@ $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
                         <?php endif; ?>
 
                         <form method="POST" action="ubah_password.php">
+                            <?= csrfField() ?>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Password Saat Ini</label>
                                 <input type="password" name="current_password" class="form-control" placeholder="Masukkan password lama" required>
@@ -310,5 +298,3 @@ $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
             }
         }
     </script>
-</body>
-</html>

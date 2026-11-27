@@ -27,20 +27,9 @@ $total_user = $pdo->query("SELECT COUNT(*) FROM users WHERE role IN ('siswa','gu
 $total_vote = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
 $total_candidate = $pdo->query("SELECT COUNT(*) FROM candidates")->fetchColumn();
 $progress = $total_user > 0 ? ($total_vote / $total_user) * 100 : 0;
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - <?= htmlspecialchars($_SESSION['role']) ?></title>
-    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/img/favicon.ico">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css?v=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+$page_title = 'Dashboard - ' . $_SESSION['role'];
+$extra_head = <<<'HTML'
     <style>
         /* CSS Variables untuk Tema Modern */
         :root {
@@ -292,9 +281,9 @@ $progress = $total_user > 0 ? ($total_vote / $total_user) * 100 : 0;
             }
         }
     </style>
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/header.php'; ?>
+HTML;
+include __DIR__ . '/../includes/header.php';
+?>
     
     <div class="dashboard-container">
         <div class="user-info">
@@ -387,7 +376,7 @@ $progress = $total_user > 0 ? ($total_vote / $total_user) * 100 : 0;
     <?php include __DIR__ . '/../includes/footer.php'; ?>
 
     <script>
-        document.querySelector('a[href*="keluar.php"]').addEventListener('click', function(e) {
+        document.querySelector('a[href*="keluar.php"]')?.addEventListener('click', function(e) {
             if (!confirm('Apakah Anda yakin ingin keluar dari sistem?')) {
                 e.preventDefault();
             }
@@ -396,6 +385,7 @@ $progress = $total_user > 0 ? ($total_vote / $total_user) * 100 : 0;
         // Animasi Progress Bar saat diload
         document.addEventListener("DOMContentLoaded", function() {
             const progressFill = document.querySelector('.progress-fill');
+            if (!progressFill) return;
             const targetWidth = progressFill.style.width;
             progressFill.style.width = '0%';
             setTimeout(() => {
@@ -403,5 +393,3 @@ $progress = $total_user > 0 ? ($total_vote / $total_user) * 100 : 0;
             }, 100);
         });
     </script>
-</body>
-</html>

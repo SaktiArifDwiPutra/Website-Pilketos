@@ -5,44 +5,40 @@ require_once '../includes/cekuser.php';
 redirectIfNotAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $role = $_POST['role'];
-    
-    if (empty($username) || empty($password) || empty($role)) {
-        $error = "Semua field harus diisi!";
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        http_response_code(403);
+        $error = "Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.";
     } else {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        
-        if ($stmt->fetch()) {
-            $error = "Username sudah digunakan! Silakan gunakan username lain.";
+        $username = trim((string) ($_POST['username'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+        $role = (string) ($_POST['role'] ?? '');
+
+        if (empty($username) || empty($password) || empty($role)) {
+            $error = "Semua field harus diisi!";
+        } elseif (!in_array($role, ['siswa', 'guru'], true)) {
+            http_response_code(400);
+            $error = "Hak akses (role) tidak valid!";
         } else {
-            $hashedPassword = hashPassword($password);
-            
-            $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-            $stmt->execute([$username, $hashedPassword, $role]);
-            
-            header('Location: tambah_akun.php?success=1');
-            exit;
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+            $stmt->execute([$username]);
+
+            if ($stmt->fetch()) {
+                $error = "Username sudah digunakan! Silakan gunakan username lain.";
+            } else {
+                $hashedPassword = hashPassword($password);
+
+                $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+                $stmt->execute([$username, $hashedPassword, $role]);
+
+                header('Location: tambah_akun.php?success=1');
+                exit;
+            }
         }
     }
 }
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tambah Akun - Pemilihan Ketua OSIS</title>
-    
-    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/img/favicon.ico">
-    <link rel="stylesheet" href="../assets/css/style.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+$page_title = "Tambah Akun - Pemilihan Ketua OSIS";
+$extra_head = <<<'HTML'
     <style>
         /* Variabel Warna Modern */
         :root {
@@ -267,9 +263,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
+HTML;
+include '../includes/header.php';
+?>
     
     <div class="page-container">
         
@@ -297,6 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <div class="form-card">
             <form method="POST">
+                <?= csrfField() ?>
                 
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -357,5 +354,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </script>
-</body>
-</html>

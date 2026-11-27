@@ -13,22 +13,9 @@ $stmt = $pdo->query("
 $candidates = $stmt->fetchAll();
 
 $total_votes = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hasil Pemilihan - Pemilihan Ketua OSIS</title>
-    
-    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/img/favicon.ico">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/style.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+$page_title = "Hasil Pemilihan - Pemilihan Ketua OSIS";
+$extra_head = <<<'HTML'
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -224,9 +211,9 @@ $total_votes = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
             border-radius: 4px;
         }
     </style>
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
+HTML;
+include '../includes/header.php';
+?>
     
     <div class="page-banner">
         <div class="container">
@@ -321,10 +308,10 @@ $total_votes = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
         const voteChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [<?= implode(',', array_map(function($c) { return "'" . addslashes($c['nama']) . "'"; }, $candidates)) ?>],
+                labels: <?= json_encode(array_column($candidates, 'nama'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                 datasets: [{
                     label: 'Perolehan Suara',
-                    data: [<?= implode(',', array_column($candidates, 'jumlah_suara')) ?>],
+                    data: <?= json_encode(array_map('intval', array_column($candidates, 'jumlah_suara'))) ?>,
                     backgroundColor: modernColors,
                     borderColor: borderColors,
                     borderWidth: 0, // Dibuat 0 agar tampil mulus tanpa outline
@@ -383,5 +370,3 @@ $total_votes = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
             }
         });
     </script>
-</body>
-</html>

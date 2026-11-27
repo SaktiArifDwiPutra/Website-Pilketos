@@ -6,45 +6,70 @@ redirectIfNotAdmin();
 
 $error = '';
 $success = '';
-$allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+$allowed_mime_map = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+];
+$allowed_image_types = [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_GIF];
 $upload_dir = __DIR__ . '/../assets/img/candidates/';
 
 if (!file_exists($upload_dir)) {
-    if (!mkdir($upload_dir, 0777, true)) {
+    if (!mkdir($upload_dir, 0755, true)) {
         $error = "Gagal membuat folder upload. Periksa permission folder.";
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $target_path = null;
     try {
-        $nama = trim($_POST['nama']);
-        $kelas = trim($_POST['kelas']);
-        $visi = trim($_POST['visi']);
-        $misi = trim($_POST['misi']);
-        $Program = trim($_POST['Program']);
-        
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            http_response_code(403);
+            throw new Exception("Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.");
+        }
+
+        $nama = trim((string) ($_POST['nama'] ?? ''));
+        $kelas = trim((string) ($_POST['kelas'] ?? ''));
+        $visi = trim((string) ($_POST['visi'] ?? ''));
+        $misi = trim((string) ($_POST['misi'] ?? ''));
+        $Program = trim((string) ($_POST['Program'] ?? ''));
+
         if (empty($nama) || empty($kelas) || empty($visi) || empty($misi)) {
             throw new Exception("Semua field harus diisi!");
         }
 
         $foto = null;
         if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $file_name = $_FILES['foto']['name'];
             $file_tmp = $_FILES['foto']['tmp_name'];
-            $file_size = $_FILES['foto']['size'];
-            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-            
-            if (!in_array($file_ext, $allowed_extensions)) {
-                throw new Exception("Hanya file JPG, JPEG, PNG, atau GIF yang diizinkan.");
+            $file_size = (int) $_FILES['foto']['size'];
+
+            if (!is_uploaded_file($file_tmp)) {
+                throw new Exception("File upload tidak valid.");
             }
-            
-            if ($file_size > 2097152) { // 2MB
-                throw new Exception("Ukuran file terlalu besar. Maksimal 2MB.");
+
+            if ($file_size <= 0 || $file_size > 2097152) { // 2MB
+                throw new Exception("Ukuran file terlalu besar atau kosong. Maksimal 2MB.");
             }
-            
-            $new_filename = 'candidate_' . uniqid() . '.' . $file_ext;
+
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime_type = $finfo ? finfo_file($finfo, $file_tmp) : false;
+            if ($finfo) {
+                finfo_close($finfo);
+            }
+
+            if ($mime_type === false || !isset($allowed_mime_map[$mime_type])) {
+                throw new Exception("Hanya file gambar JPG, PNG, atau GIF yang diizinkan.");
+            }
+
+            $image_info = @getimagesize($file_tmp);
+            if ($image_info === false || empty($image_info[0]) || empty($image_info[1]) || !in_array($image_info[2], $allowed_image_types, true)) {
+                throw new Exception("File yang diupload bukan gambar yang valid.");
+            }
+
+            $safe_ext = $allowed_mime_map[$mime_type];
+            $new_filename = 'candidate_' . bin2hex(random_bytes(8)) . '.' . $safe_ext;
             $target_path = $upload_dir . $new_filename;
-            
+
             if (move_uploaded_file($file_tmp, $target_path)) {
                 $foto = $new_filename;
             } else {
@@ -56,32 +81,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("INSERT INTO candidates (foto, nama, kelas, visi, misi, Program) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$foto, $nama, $kelas, $visi, $misi, $Program]);
-        
+
         $success = "Calon berhasil ditambahkan!";
-        $_POST = []; 
-        
+        $_POST = [];
     } catch (Exception $e) {
         $error = $e->getMessage();
-        
-        if (isset($target_path) && file_exists($target_path)) {
+
+        if ($target_path !== null && file_exists($target_path)) {
             unlink($target_path);
         }
     }
 }
-?>
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tambah Calon - Pemilihan Ketua OSIS</title>
-    <link rel="icon" type="image/svg+xml" href="<?= BASE_URL ?>/assets/img/favicon.ico">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+$page_title = "Tambah Calon - Pemilihan Ketua OSIS";
+$extra_head = <<<'HTML'
     <style>
         /* Variabel Warna Modern (Senada dengan Dashboard) */
         :root {
@@ -307,9 +320,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-left: 4px solid #22c55e;
         }
     </style>
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/header.php'; ?>
+HTML;
+include __DIR__ . '/../includes/header.php';
+?>
     
     <div class="page-container">
         
@@ -334,6 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <div class="form-card">
             <form method="POST" enctype="multipart/form-data" id="candidateForm">
+                <?= csrfField() ?>
                 
                 <div class="form-grid">
                     
@@ -426,6 +440,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
     
     <?php include __DIR__ . '/../includes/footer.php'; ?>
-
-</body>
-</html>

@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= isset($page_title) ? $page_title : 'Pemilihan Ketua OSIS' ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($page_title ?? 'Pemilihan Ketua OSIS', ENT_QUOTES, 'UTF-8') ?></title>
     
     <link rel="shortcut icon" href="<?= BASE_URL ?>/assets/img/favicon.ico" type="image/x-icon">
     <link rel="icon" href="<?= BASE_URL ?>/assets/img/favicon.png" type="image/png">
@@ -149,6 +149,7 @@
             }
         }
     </style>
+    <?= $extra_head ?? '' ?>
 </head>
 <body>
 <header>
