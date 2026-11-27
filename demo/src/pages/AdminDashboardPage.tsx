@@ -59,6 +59,7 @@ export const AdminDashboardPage: React.FC = () => {
   return (
     <div>
       <div
+        className="admin-banner"
         style={{
           background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
           color: '#fff',

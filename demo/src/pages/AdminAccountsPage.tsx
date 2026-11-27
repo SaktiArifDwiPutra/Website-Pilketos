@@ -103,7 +103,7 @@ export const AdminAccountsPage: React.FC = () => {
           <Users size={20} color="#4f46e5" /> Daftar Akun Pemilih ({voterAccounts.length})
         </h3>
         <div className="table-wrap">
-          <table>
+          <table className="table-mobile-cards">
             <thead>
               <tr>
                 <th>Username</th>
@@ -115,15 +115,15 @@ export const AdminAccountsPage: React.FC = () => {
             <tbody>
               {voterAccounts.map((acc) => (
                 <tr key={acc.id}>
-                  <td style={{ fontWeight: 600 }}>{acc.username}</td>
-                  <td>
+                  <td data-label="Username" style={{ fontWeight: 600 }}>{acc.username}</td>
+                  <td data-label="Role">
                     <span className={`badge badge-${acc.role}`}>{acc.role.toUpperCase()}</span>
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span className="badge badge-muted">{acc.sudah_vote ? 'Sudah Vote' : 'Belum Vote'}</span>
                   </td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginRight: 6 }}>
+                  <td data-label="Aksi" className="admin-actions-cell" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <div className="admin-actions-row" style={{ justifyContent: 'flex-end', alignItems: 'center' }}>
                       <input
                         type="password"
                         className="form-control"
@@ -133,18 +133,18 @@ export const AdminAccountsPage: React.FC = () => {
                         onChange={(e) => setResetInputs((prev) => ({ ...prev, [acc.id]: e.target.value }))}
                       />
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleReset(acc.id)} title="Reset Password">
-                        <KeyRound size={14} />
+                        <KeyRound size={14} /> Reset
                       </button>
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-danger btn-sm"
-                      disabled={acc.sudah_vote}
-                      title={acc.sudah_vote ? 'Sudah memberikan suara' : 'Hapus akun'}
-                      onClick={() => handleDelete(acc.id)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        disabled={acc.sudah_vote}
+                        title={acc.sudah_vote ? 'Sudah memberikan suara' : 'Hapus akun'}
+                        onClick={() => handleDelete(acc.id)}
+                      >
+                        <Trash2 size={14} /> Hapus
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

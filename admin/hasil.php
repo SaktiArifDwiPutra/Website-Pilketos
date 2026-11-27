@@ -211,6 +211,20 @@ $extra_head = <<<'HTML'
             border-radius: 4px;
         }
 
+        @media (max-width: 575.98px) {
+            .page-banner { padding: 28px 16px 64px; }
+            .page-banner h1 { font-size: 1.4rem; }
+            .modern-card { padding: 18px 14px; }
+            .total-votes-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+                padding: 18px 16px;
+            }
+            .total-votes-info .angka { font-size: 2rem; }
+            .chart-wrapper { height: 250px; }
+        }
+
         @media print {
             header, footer, .back-to-top, .no-print { display: none !important; }
             .page-banner { padding: 20px; border-radius: 0; color: #0f172a; background: none; }

@@ -428,6 +428,15 @@ $extra_head = <<<'HTML'
             object-fit: cover;
             border-radius: 8px;
         }
+
+        @media (max-width: 575.98px) {
+            .page-container {
+                margin: 20px auto;
+                padding: 0 12px;
+            }
+            .page-header h1 { font-size: 1.25rem; }
+            .form-card { padding: 18px 14px; }
+        }
     </style>
 HTML;
 include __DIR__ . '/../includes/header.php';
@@ -555,17 +564,19 @@ include __DIR__ . '/../includes/header.php';
                                     <td><?= htmlspecialchars($c['kelas'], ENT_QUOTES, 'UTF-8') ?></td>
                                     <td><span class="badge bg-light text-dark border"><?= (int) $c['total_suara'] ?></span></td>
                                     <td class="text-end">
-                                        <a href="tambah_calon.php?edit=<?= (int) $c['id'] ?>" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="fa-solid fa-pen"></i> Edit
-                                        </a>
-                                        <form method="POST" class="d-inline" onsubmit="return confirm('Hapus kandidat ini?');">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="candidate_id" value="<?= (int) $c['id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $c['total_suara'] > 0 ? 'disabled title="Sudah memiliki suara"' : '' ?>>
-                                                <i class="fa-solid fa-trash"></i> Hapus
-                                            </button>
-                                        </form>
+                                        <div class="d-flex flex-wrap justify-content-end gap-1">
+                                            <a href="tambah_calon.php?edit=<?= (int) $c['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa-solid fa-pen"></i> Edit
+                                            </a>
+                                            <form method="POST" class="d-inline" onsubmit="return confirm('Hapus kandidat ini?');">
+                                                <?= csrfField() ?>
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="candidate_id" value="<?= (int) $c['id'] ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $c['total_suara'] > 0 ? 'disabled title="Sudah memiliki suara"' : '' ?>>
+                                                    <i class="fa-solid fa-trash"></i> Hapus
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

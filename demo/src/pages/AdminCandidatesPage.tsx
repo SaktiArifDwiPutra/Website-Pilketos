@@ -189,7 +189,7 @@ export const AdminCandidatesPage: React.FC = () => {
           <Users size={20} color="#4f46e5" /> Daftar Kandidat Terdaftar ({state.candidates.length})
         </h3>
         <div className="table-wrap">
-          <table>
+          <table className="table-mobile-cards">
             <thead>
               <tr>
                 <th>Foto</th>
@@ -204,27 +204,29 @@ export const AdminCandidatesPage: React.FC = () => {
                 const voteCount = state.votes.filter((v) => v.candidate_id === c.id).length;
                 return (
                   <tr key={c.id}>
-                    <td>
+                    <td data-label="Foto">
                       <img src={c.foto || DEFAULT_AVATAR} alt={c.nama} style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 8 }} />
                     </td>
-                    <td style={{ fontWeight: 600 }}>{c.nama}</td>
-                    <td>{c.kelas}</td>
-                    <td>
+                    <td data-label="Nama" style={{ fontWeight: 600 }}>{c.nama}</td>
+                    <td data-label="Kelas">{c.kelas}</td>
+                    <td data-label="Suara">
                       <span className="badge badge-muted">{voteCount}</span>
                     </td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(c.id)} style={{ marginRight: 6 }}>
-                        <Pencil size={14} /> Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm"
-                        disabled={voteCount > 0}
-                        title={voteCount > 0 ? 'Sudah memiliki suara' : 'Hapus kandidat'}
-                        onClick={() => handleDelete(c.id)}
-                      >
-                        <Trash2 size={14} /> Hapus
-                      </button>
+                    <td data-label="Aksi" className="admin-actions-cell" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div className="admin-actions-row" style={{ justifyContent: 'flex-end' }}>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(c.id)}>
+                          <Pencil size={14} /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          disabled={voteCount > 0}
+                          title={voteCount > 0 ? 'Sudah memiliki suara' : 'Hapus kandidat'}
+                          onClick={() => handleDelete(c.id)}
+                        >
+                          <Trash2 size={14} /> Hapus
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

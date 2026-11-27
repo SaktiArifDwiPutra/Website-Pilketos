@@ -328,6 +328,14 @@ $extra_head = <<<'HTML'
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        @media (max-width: 575.98px) {
+            .page-container {
+                margin: 20px auto;
+                padding: 0 12px;
+            }
+            .form-card { padding: 18px 14px; }
+        }
     </style>
 HTML;
 include '../includes/header.php';
@@ -431,23 +439,25 @@ include '../includes/header.php';
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
-                                        <form method="POST" class="d-inline-flex align-items-center gap-1 me-1">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="reset_password">
-                                            <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
-                                            <input type="password" name="new_password" class="form-control form-control-sm" style="width:130px;padding:4px 8px;" placeholder="Pass baru (6+)" minlength="6" required>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Reset Password">
-                                                <i class="fa-solid fa-key"></i>
-                                            </button>
-                                        </form>
-                                        <form method="POST" class="d-inline" onsubmit="return confirm('Hapus akun ini?');">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $acc['sudah_vote'] === 1 ? 'disabled title="Sudah memberikan suara"' : '' ?>>
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                                            <form method="POST" class="d-inline-flex align-items-center gap-1">
+                                                <?= csrfField() ?>
+                                                <input type="hidden" name="action" value="reset_password">
+                                                <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
+                                                <input type="password" name="new_password" class="form-control form-control-sm" style="width:120px;padding:4px 8px;" placeholder="Pass baru (6+)" minlength="6" required>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Reset Password">
+                                                    <i class="fa-solid fa-key"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" class="d-inline" onsubmit="return confirm('Hapus akun ini?');">
+                                                <?= csrfField() ?>
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $acc['sudah_vote'] === 1 ? 'disabled title="Sudah memberikan suara"' : '' ?>>
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

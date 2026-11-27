@@ -210,6 +210,17 @@ $extra_head = <<<'HTML'
             align-items: center;
             gap: 10px;
         }
+
+        @media (max-width: 575.98px) {
+            .dashboard-header {
+                padding: 28px 16px 52px;
+                border-radius: 0 0 22px 22px;
+                margin-bottom: -32px;
+            }
+            .dashboard-header h1 { font-size: 1.4rem; }
+            .menu-card { padding: 20px 16px; }
+            .password-card .card-body { padding: 20px 16px; }
+        }
     </style>
 HTML;
 include '../includes/header.php';

@@ -47,6 +47,7 @@ export const AdminResultsPage: React.FC = () => {
   return (
     <div>
       <div
+        className="admin-banner"
         style={{
           background: 'linear-gradient(135deg, #1e3a8a 0%, #4f46e5 100%)',
           color: '#fff',
@@ -101,7 +102,7 @@ export const AdminResultsPage: React.FC = () => {
           <h3 style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <BarChart3 size={20} color="#4f46e5" /> Statistik Perolehan Suara
           </h3>
-          <div style={{ height: 320 }}>
+          <div className="admin-chart-box" style={{ height: 320 }}>
             <Bar
               data={chartData}
               options={{
@@ -122,7 +123,7 @@ export const AdminResultsPage: React.FC = () => {
             <Table size={20} color="#4f46e5" /> Rincian Detail Kandidat
           </h3>
           <div className="table-wrap">
-            <table>
+            <table className="table-mobile-cards">
               <thead>
                 <tr>
                   <th>No</th>
@@ -135,13 +136,13 @@ export const AdminResultsPage: React.FC = () => {
               <tbody>
                 {rows.map((r, idx) => (
                   <tr key={r.id}>
-                    <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>#{idx + 1}</td>
-                    <td style={{ fontWeight: 700 }}>{r.nama}</td>
-                    <td>
+                    <td data-label="No" style={{ fontWeight: 700, color: 'var(--text-muted)' }}>#{idx + 1}</td>
+                    <td data-label="Kandidat" style={{ fontWeight: 700 }}>{r.nama}</td>
+                    <td data-label="Kelas">
                       <span className="badge badge-muted">{r.kelas}</span>
                     </td>
-                    <td style={{ fontWeight: 700, fontSize: '1.05rem' }}>{r.count}</td>
-                    <td>
+                    <td data-label="Suara" style={{ fontWeight: 700, fontSize: '1.05rem' }}>{r.count}</td>
+                    <td data-label="Persentase">
                       <span
                         style={{
                           background: 'rgba(79,70,229,0.1)',
