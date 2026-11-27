@@ -4,38 +4,108 @@ require_once '../includes/functions.php';
 require_once '../includes/cekuser.php';
 redirectIfNotAdmin();
 
+$error = null;
+$successMessage = null;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
         http_response_code(403);
         $error = "Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.";
     } else {
-        $username = trim((string) ($_POST['username'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
-        $role = (string) ($_POST['role'] ?? '');
+        $action = (string) ($_POST['action'] ?? 'create');
 
-        if (empty($username) || empty($password) || empty($role)) {
-            $error = "Semua field harus diisi!";
-        } elseif (!in_array($role, ['siswa', 'guru'], true)) {
-            http_response_code(400);
-            $error = "Hak akses (role) tidak valid!";
-        } else {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-
-            if ($stmt->fetch()) {
-                $error = "Username sudah digunakan! Silakan gunakan username lain.";
+        if ($action === 'delete') {
+            $userId = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+            if (!$userId || $userId <= 0) {
+                $error = "ID akun tidak valid.";
             } else {
-                $hashedPassword = hashPassword($password);
+                $targetStmt = $pdo->prepare("SELECT id, role FROM users WHERE id = ? LIMIT 1");
+                $targetStmt->execute([$userId]);
+                $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-                $stmt->execute([$username, $hashedPassword, $role]);
+                if (!$targetUser || !in_array($targetUser['role'], ['siswa', 'guru'], true)) {
+                    http_response_code(400);
+                    $error = "Hanya akun siswa atau guru yang dapat dihapus.";
+                } else {
+                    $voteStmt = $pdo->prepare("SELECT COUNT(*) FROM votes WHERE user_id = ?");
+                    $voteStmt->execute([$userId]);
+                    if ((int) $voteStmt->fetchColumn() > 0) {
+                        $error = "Akun tidak dapat dihapus karena sudah memberikan suara.";
+                    } else {
+                        $delStmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role IN ('siswa', 'guru')");
+                        $delStmt->execute([$userId]);
+                        header('Location: tambah_akun.php?deleted=1');
+                        exit;
+                    }
+                }
+            }
+        } elseif ($action === 'reset_password') {
+            $userId = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+            $newPassword = (string) ($_POST['new_password'] ?? '');
 
-                header('Location: tambah_akun.php?success=1');
-                exit;
+            if (!$userId || $userId <= 0) {
+                $error = "ID akun tidak valid.";
+            } elseif (strlen($newPassword) < 6) {
+                $error = "Password baru minimal 6 karakter.";
+            } else {
+                $targetStmt = $pdo->prepare("SELECT id, role FROM users WHERE id = ? LIMIT 1");
+                $targetStmt->execute([$userId]);
+                $targetUser = $targetStmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$targetUser || !in_array($targetUser['role'], ['siswa', 'guru'], true)) {
+                    http_response_code(400);
+                    $error = "Hanya akun siswa atau guru yang dapat direset.";
+                } else {
+                    $updStmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ? AND role IN ('siswa', 'guru')");
+                    $updStmt->execute([hashPassword($newPassword), $userId]);
+                    header('Location: tambah_akun.php?reset=1');
+                    exit;
+                }
+            }
+        } else {
+            $username = trim((string) ($_POST['username'] ?? ''));
+            $password = (string) ($_POST['password'] ?? '');
+            $role = (string) ($_POST['role'] ?? '');
+
+            if (empty($username) || empty($password) || empty($role)) {
+                $error = "Semua field harus diisi!";
+            } elseif (!in_array($role, ['siswa', 'guru'], true)) {
+                http_response_code(400);
+                $error = "Hak akses (role) tidak valid!";
+            } else {
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+                $stmt->execute([$username]);
+
+                if ($stmt->fetch()) {
+                    $error = "Username sudah digunakan! Silakan gunakan username lain.";
+                } else {
+                    $hashedPassword = hashPassword($password);
+
+                    $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+                    $stmt->execute([$username, $hashedPassword, $role]);
+
+                    header('Location: tambah_akun.php?success=1');
+                    exit;
+                }
             }
         }
     }
 }
+
+if (isset($_GET['success'])) {
+    $successMessage = "Akun berhasil ditambahkan dan disimpan di database!";
+} elseif (isset($_GET['reset'])) {
+    $successMessage = "Password akun berhasil diperbarui!";
+} elseif (isset($_GET['deleted'])) {
+    $successMessage = "Akun pemilih berhasil dihapus!";
+}
+
+$accountsList = $pdo->query("
+    SELECT id, username, role, sudah_vote, created_at
+    FROM users
+    WHERE role IN ('siswa', 'guru')
+    ORDER BY id DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 
 $page_title = "Tambah Akun - Pemilihan Ketua OSIS";
 $extra_head = <<<'HTML'
@@ -63,7 +133,7 @@ $extra_head = <<<'HTML'
         }
 
         .page-container {
-            max-width: 600px; /* Dibuat lebih kecil dari form calon karena isiannya sedikit */
+            max-width: 820px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -113,6 +183,7 @@ $extra_head = <<<'HTML'
             border-radius: 16px;
             box-shadow: var(--shadow-md);
             border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 30px;
         }
 
         .form-group { margin-bottom: 20px; }
@@ -138,12 +209,12 @@ $extra_head = <<<'HTML'
             color: var(--text-muted);
             font-size: 1rem;
             transition: color 0.3s ease;
-            pointer-events: none; /* Agar tidak mengganggu klik */
+            pointer-events: none;
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 16px 12px 40px; /* Padding kiri dilonggarkan untuk ikon */
+            padding: 12px 16px;
             border: 1.5px solid var(--border-color);
             border-radius: var(--radius-md);
             font-family: inherit;
@@ -160,19 +231,14 @@ $extra_head = <<<'HTML'
             box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
 
-        .form-control:focus + i,
-        .form-control:not(:placeholder-shown) + i {
-            color: var(--primary);
-        }
-
         /* Styling khusus Select */
         select.form-control {
-            appearance: none; /* Hilangkan panah default */
+            appearance: none;
             cursor: pointer;
         }
 
         .select-wrapper::after {
-            content: '\f107'; /* Panah bawah FontAwesome */
+            content: '\f107';
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
@@ -187,16 +253,16 @@ $extra_head = <<<'HTML'
         .form-actions {
             margin-top: 30px;
             display: flex;
-            flex-direction: column; /* Bawaan HP ke bawah */
+            flex-direction: column;
             gap: 12px;
         }
 
         @media (min-width: 576px) {
             .form-actions {
-                flex-direction: row; /* Desktop ke samping */
+                flex-direction: row;
             }
             .form-actions .btn-modern {
-                flex: 1; /* Lebar seimbang */
+                flex: 1;
             }
         }
 
@@ -273,27 +339,28 @@ include '../includes/header.php';
             <div class="header-icon">
                 <i class="fa-solid fa-user-shield"></i>
             </div>
-            <h1>Tambah Akun Pengguna</h1>
-            <p>Buat akun baru untuk Siswa atau Guru</p>
+            <h1>Kelola Akun Pengguna</h1>
+            <p>Buat dan kelola akun untuk Siswa atau Guru</p>
         </div>
         
-        <?php if (isset($error)): ?>
+        <?php if ($error): ?>
             <div class="alert-modern alert-error">
                 <i class="fa-solid fa-triangle-exclamation fs-5"></i>
-                <div><?= htmlspecialchars($error) ?></div>
+                <div><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
             </div>
         <?php endif; ?>
         
-        <?php if (isset($_GET['success'])): ?>
+        <?php if ($successMessage): ?>
             <div class="alert-modern alert-success">
                 <i class="fa-solid fa-circle-check fs-5"></i>
-                <div>Akun berhasil ditambahkan dan disimpan di database!</div>
+                <div><?= htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8') ?></div>
             </div>
         <?php endif; ?>
         
         <div class="form-card">
             <form method="POST">
                 <?= csrfField() ?>
+                <input type="hidden" name="action" value="create">
                 
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -331,6 +398,64 @@ include '../includes/header.php';
                 
             </form>
         </div>
+
+        <div class="form-card">
+            <h4 class="mb-3 fw-bold"><i class="fa-solid fa-users-gear me-2 text-primary"></i>Daftar Akun Pemilih (<?= count($accountsList) ?>)</h4>
+            <?php if (empty($accountsList)): ?>
+                <p class="text-muted mb-0">Belum ada akun siswa atau guru.</p>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Status Voting</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($accountsList as $acc): ?>
+                                <tr>
+                                    <td class="fw-semibold"><?= htmlspecialchars($acc['username'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td>
+                                        <span class="badge <?= $acc['role'] === 'guru' ? 'bg-primary' : 'bg-success' ?>">
+                                            <?= htmlspecialchars(strtoupper($acc['role']), ENT_QUOTES, 'UTF-8') ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if ((int) $acc['sudah_vote'] === 1): ?>
+                                            <span class="badge bg-secondary">Sudah Vote</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-dark border">Belum Vote</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="POST" class="d-inline-flex align-items-center gap-1 me-1">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="reset_password">
+                                            <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
+                                            <input type="password" name="new_password" class="form-control form-control-sm" style="width:130px;padding:4px 8px;" placeholder="Pass baru (6+)" minlength="6" required>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Reset Password">
+                                                <i class="fa-solid fa-key"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" class="d-inline" onsubmit="return confirm('Hapus akun ini?');">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="user_id" value="<?= (int) $acc['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $acc['sudah_vote'] === 1 ? 'disabled title="Sudah memberikan suara"' : '' ?>>
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
     
     <?php include '../includes/footeradmin.php'; ?>
@@ -342,15 +467,16 @@ include '../includes/header.php';
             }
         });
         
-        // Membersihkan URL dari parameter ?success=1 setelah 3 detik agar tidak muncul terus kalau di-refresh
         if(window.history.replaceState) {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('success')) {
+            if (urlParams.has('success') || urlParams.has('reset') || urlParams.has('deleted')) {
                 setTimeout(() => {
                     urlParams.delete('success');
+                    urlParams.delete('reset');
+                    urlParams.delete('deleted');
                     const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
                     window.history.replaceState(null, '', newUrl);
-                }, 3000); // Alert sukses hilang dari URL setelah 3 detik
+                }, 3000);
             }
         }
     </script>

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/cekuser.php';
 
 $sudah_vote = false;
 $bisa_vote = false;
+$electionStatus = getElectionStatus($pdo);
 
 if ($_SESSION['role'] === 'siswa' || $_SESSION['role'] === 'guru') {
     $stmt = $pdo->prepare("SELECT COUNT(*) as sudah_vote FROM votes WHERE user_id = ?");
@@ -12,14 +13,14 @@ if ($_SESSION['role'] === 'siswa' || $_SESSION['role'] === 'guru') {
     $result = $stmt->fetch();
     
     $sudah_vote = ($result['sudah_vote'] > 0);
-    $bisa_vote = !$sudah_vote;
+    $bisa_vote = !$sudah_vote && $electionStatus['is_open'];
     
     if ($_SESSION['role'] === 'siswa') {
         $stmt = $pdo->prepare("SELECT sudah_vote FROM users WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $user = $stmt->fetch();
         $sudah_vote = $sudah_vote || $user['sudah_vote'];
-        $bisa_vote = !$sudah_vote;
+        $bisa_vote = !$sudah_vote && $electionStatus['is_open'];
     }
 }
 
@@ -313,7 +314,7 @@ include __DIR__ . '/../includes/header.php';
         <div class="alert alert-info">
             <i class="fa-solid fa-bullhorn" style="font-size: 1.2rem; margin-right: 8px;"></i>
             <div>
-                <strong>Info Penting:</strong> Pemilihan akan ditutup pada <b>25 Oktober 2025</b>. Pastikan kamu sudah memberikan suara!
+                <strong>Info Penting:</strong> <?= htmlspecialchars($electionStatus['banner_text'], ENT_QUOTES, 'UTF-8') ?>
             </div>
         </div>
 
@@ -338,7 +339,7 @@ include __DIR__ . '/../includes/header.php';
             </div>
             <div class="menu-card">
                 <h2><i class="fa-solid fa-calendar-days"></i> Jadwal</h2>
-                <p style="font-size: 1.1rem;">24 – 25 Okt 2025</p>
+                <p style="font-size: 1.1rem;"><?= htmlspecialchars($electionStatus['schedule_text'], ENT_QUOTES, 'UTF-8') ?></p>
             </div>
         </div>
 

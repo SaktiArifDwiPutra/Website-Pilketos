@@ -15,11 +15,15 @@ $userRow = $stmt->fetch();
 $voteCheckStmt = $pdo->prepare("SELECT id FROM votes WHERE user_id = ?");
 $voteCheckStmt->execute([$_SESSION['user_id']]);
 $already_voted = ($userRow && $userRow['sudah_vote']) || (bool) $voteCheckStmt->fetch();
+$electionStatus = getElectionStatus($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidate_id'])) {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
         http_response_code(403);
         $error = "Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.";
+    } elseif (!$electionStatus['is_open']) {
+        http_response_code(403);
+        $error = $electionStatus['banner_text'];
     } elseif ($already_voted) {
         $error = "Anda sudah memberikan suara sebelumnya.";
     } else {
@@ -87,6 +91,11 @@ include __DIR__ . '/../includes/header.php';
         <?php if ($already_voted): ?>
             <div class="alert alert-info">
                 <strong>Anda sudah memberikan suara.</strong> Terima kasih atas partisipasinya.
+                <a href="<?= BASE_URL ?>/user/dashboard.php" class="btn btn-sm btn-primary ms-2">Kembali ke Dashboard</a>
+            </div>
+        <?php elseif (!$electionStatus['is_open']): ?>
+            <div class="alert alert-warning">
+                <strong>Pemungutan suara sedang ditutup.</strong> <?= htmlspecialchars($electionStatus['banner_text'], ENT_QUOTES, 'UTF-8') ?>
                 <a href="<?= BASE_URL ?>/user/dashboard.php" class="btn btn-sm btn-primary ms-2">Kembali ke Dashboard</a>
             </div>
         <?php else: ?>

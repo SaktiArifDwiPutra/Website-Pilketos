@@ -20,80 +20,181 @@ if (!file_exists($upload_dir)) {
     }
 }
 
+function saveValidatedCandidatePhoto(array $file, string $uploadDir, array $allowedMimeMap, array $allowedImageTypes): string
+{
+    $fileTmp = $file['tmp_name'];
+    $fileSize = (int) $file['size'];
+
+    if (!is_uploaded_file($fileTmp)) {
+        throw new Exception("File upload tidak valid.");
+    }
+
+    if ($fileSize <= 0 || $fileSize > 2097152) {
+        throw new Exception("Ukuran file terlalu besar atau kosong. Maksimal 2MB.");
+    }
+
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo ? finfo_file($finfo, $fileTmp) : false;
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+
+    if ($mimeType === false || !isset($allowedMimeMap[$mimeType])) {
+        throw new Exception("Hanya file gambar JPG, PNG, atau GIF yang diizinkan.");
+    }
+
+    $imageInfo = @getimagesize($fileTmp);
+    if ($imageInfo === false || empty($imageInfo[0]) || empty($imageInfo[1]) || !in_array($imageInfo[2], $allowedImageTypes, true)) {
+        throw new Exception("File yang diupload bukan gambar yang valid.");
+    }
+
+    $safeExt = $allowedMimeMap[$mimeType];
+    $newFilename = 'candidate_' . bin2hex(random_bytes(8)) . '.' . $safeExt;
+    $targetPath = $uploadDir . $newFilename;
+
+    if (!move_uploaded_file($fileTmp, $targetPath)) {
+        throw new Exception("Gagal menyimpan file. Periksa permission folder.");
+    }
+
+    return $newFilename;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = (string) ($_POST['action'] ?? 'save');
     $target_path = null;
+
     try {
         if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
             http_response_code(403);
             throw new Exception("Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.");
         }
 
-        $nama = trim((string) ($_POST['nama'] ?? ''));
-        $kelas = trim((string) ($_POST['kelas'] ?? ''));
-        $visi = trim((string) ($_POST['visi'] ?? ''));
-        $misi = trim((string) ($_POST['misi'] ?? ''));
-        $Program = trim((string) ($_POST['Program'] ?? ''));
-
-        if (empty($nama) || empty($kelas) || empty($visi) || empty($misi)) {
-            throw new Exception("Semua field harus diisi!");
-        }
-
-        $foto = null;
-        if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-            $file_tmp = $_FILES['foto']['tmp_name'];
-            $file_size = (int) $_FILES['foto']['size'];
-
-            if (!is_uploaded_file($file_tmp)) {
-                throw new Exception("File upload tidak valid.");
+        if ($action === 'delete') {
+            $deleteId = filter_input(INPUT_POST, 'candidate_id', FILTER_VALIDATE_INT);
+            if (!$deleteId || $deleteId <= 0) {
+                throw new Exception("ID kandidat tidak valid.");
             }
 
-            if ($file_size <= 0 || $file_size > 2097152) { // 2MB
-                throw new Exception("Ukuran file terlalu besar atau kosong. Maksimal 2MB.");
+            $candStmt = $pdo->prepare("SELECT id, foto FROM candidates WHERE id = ? LIMIT 1");
+            $candStmt->execute([$deleteId]);
+            $candRow = $candStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$candRow) {
+                throw new Exception("Kandidat tidak ditemukan.");
             }
 
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime_type = $finfo ? finfo_file($finfo, $file_tmp) : false;
-            if ($finfo) {
-                finfo_close($finfo);
+            $voteCountStmt = $pdo->prepare("SELECT COUNT(*) FROM votes WHERE candidate_id = ?");
+            $voteCountStmt->execute([$deleteId]);
+            if ((int) $voteCountStmt->fetchColumn() > 0) {
+                throw new Exception("Kandidat tidak dapat dihapus karena sudah memiliki suara.");
             }
 
-            if ($mime_type === false || !isset($allowed_mime_map[$mime_type])) {
-                throw new Exception("Hanya file gambar JPG, PNG, atau GIF yang diizinkan.");
+            $delStmt = $pdo->prepare("DELETE FROM candidates WHERE id = ?");
+            $delStmt->execute([$deleteId]);
+
+            if (!empty($candRow['foto']) && $candRow['foto'] !== 'default.jpg') {
+                $oldFile = $upload_dir . basename($candRow['foto']);
+                if (is_file($oldFile)) {
+                    @unlink($oldFile);
+                }
             }
 
-            $image_info = @getimagesize($file_tmp);
-            if ($image_info === false || empty($image_info[0]) || empty($image_info[1]) || !in_array($image_info[2], $allowed_image_types, true)) {
-                throw new Exception("File yang diupload bukan gambar yang valid.");
-            }
-
-            $safe_ext = $allowed_mime_map[$mime_type];
-            $new_filename = 'candidate_' . bin2hex(random_bytes(8)) . '.' . $safe_ext;
-            $target_path = $upload_dir . $new_filename;
-
-            if (move_uploaded_file($file_tmp, $target_path)) {
-                $foto = $new_filename;
-            } else {
-                throw new Exception("Gagal menyimpan file. Periksa permission folder.");
-            }
+            $success = "Calon berhasil dihapus!";
         } else {
-            throw new Exception("File foto wajib diupload.");
+            $editId = filter_input(INPUT_POST, 'candidate_id', FILTER_VALIDATE_INT);
+            $isEdit = $editId && $editId > 0;
+
+            $nama = trim((string) ($_POST['nama'] ?? ''));
+            $kelas = trim((string) ($_POST['kelas'] ?? ''));
+            $visi = trim((string) ($_POST['visi'] ?? ''));
+            $misi = trim((string) ($_POST['misi'] ?? ''));
+            $Program = trim((string) ($_POST['Program'] ?? ''));
+
+            if (empty($nama) || empty($kelas) || empty($visi) || empty($misi)) {
+                throw new Exception("Semua field harus diisi!");
+            }
+
+            if ($isEdit) {
+                $existingStmt = $pdo->prepare("SELECT id, foto FROM candidates WHERE id = ? LIMIT 1");
+                $existingStmt->execute([$editId]);
+                $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$existing) {
+                    throw new Exception("Data calon tidak ditemukan.");
+                }
+
+                $foto = $existing['foto'];
+                if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+                    $newFoto = saveValidatedCandidatePhoto($_FILES['foto'], $upload_dir, $allowed_mime_map, $allowed_image_types);
+                    $target_path = $upload_dir . $newFoto;
+                    $foto = $newFoto;
+                }
+
+                $stmt = $pdo->prepare("UPDATE candidates SET foto = ?, nama = ?, kelas = ?, visi = ?, misi = ?, Program = ? WHERE id = ?");
+                $stmt->execute([$foto, $nama, $kelas, $visi, $misi, $Program, $editId]);
+
+                if ($target_path !== null && !empty($existing['foto']) && $existing['foto'] !== 'default.jpg') {
+                    $oldFile = $upload_dir . basename($existing['foto']);
+                    if (is_file($oldFile)) {
+                        @unlink($oldFile);
+                    }
+                }
+
+                header('Location: tambah_calon.php?updated=1');
+                exit;
+            } else {
+                if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+                    $foto = saveValidatedCandidatePhoto($_FILES['foto'], $upload_dir, $allowed_mime_map, $allowed_image_types);
+                    $target_path = $upload_dir . $foto;
+                } else {
+                    throw new Exception("File foto wajib diupload.");
+                }
+
+                $stmt = $pdo->prepare("INSERT INTO candidates (foto, nama, kelas, visi, misi, Program) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$foto, $nama, $kelas, $visi, $misi, $Program]);
+
+                $success = "Calon berhasil ditambahkan!";
+                $_POST = [];
+            }
         }
-
-        $stmt = $pdo->prepare("INSERT INTO candidates (foto, nama, kelas, visi, misi, Program) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$foto, $nama, $kelas, $visi, $misi, $Program]);
-
-        $success = "Calon berhasil ditambahkan!";
-        $_POST = [];
     } catch (Exception $e) {
         $error = $e->getMessage();
 
         if ($target_path !== null && file_exists($target_path)) {
-            unlink($target_path);
+            @unlink($target_path);
         }
     }
 }
 
-$page_title = "Tambah Calon - Pemilihan Ketua OSIS";
+if (isset($_GET['updated'])) {
+    $success = "Data calon berhasil diperbarui!";
+}
+
+$editingCandidate = null;
+if (isset($_GET['edit'])) {
+    $editIdParam = filter_input(INPUT_GET, 'edit', FILTER_VALIDATE_INT);
+    if ($editIdParam && $editIdParam > 0) {
+        $editStmt = $pdo->prepare("SELECT * FROM candidates WHERE id = ? LIMIT 1");
+        $editStmt->execute([$editIdParam]);
+        $editingCandidate = $editStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+}
+
+$candidatesList = $pdo->query("
+    SELECT c.*, COUNT(v.id) AS total_suara
+    FROM candidates c
+    LEFT JOIN votes v ON c.id = v.candidate_id
+    GROUP BY c.id
+    ORDER BY c.id ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$formValues = [
+    'nama' => $_POST['nama'] ?? ($editingCandidate['nama'] ?? ''),
+    'kelas' => $_POST['kelas'] ?? ($editingCandidate['kelas'] ?? ''),
+    'visi' => $_POST['visi'] ?? ($editingCandidate['visi'] ?? ''),
+    'misi' => $_POST['misi'] ?? ($editingCandidate['misi'] ?? ''),
+    'Program' => $_POST['Program'] ?? ($editingCandidate['Program'] ?? ''),
+];
+
+$page_title = ($editingCandidate ? "Edit Calon" : "Tambah Calon") . " - Pemilihan Ketua OSIS";
 $extra_head = <<<'HTML'
     <style>
         /* Variabel Warna Modern (Senada dengan Dashboard) */
@@ -119,7 +220,7 @@ $extra_head = <<<'HTML'
         }
 
         .page-container {
-            max-width: 900px;
+            max-width: 960px;
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -153,6 +254,7 @@ $extra_head = <<<'HTML'
             border-radius: 16px;
             box-shadow: var(--shadow-sm);
             border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 30px;
         }
 
         /* Grid Layout untuk Form */
@@ -319,6 +421,13 @@ $extra_head = <<<'HTML'
             color: #166534;
             border-left: 4px solid #22c55e;
         }
+
+        .candidate-thumb {
+            width: 52px;
+            height: 52px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
     </style>
 HTML;
 include __DIR__ . '/../includes/header.php';
@@ -327,85 +436,148 @@ include __DIR__ . '/../includes/header.php';
     <div class="page-container">
         
         <div class="page-header">
-            <i class="fa-solid fa-user-plus"></i>
-            <h1>Tambah Calon Ketua OSIS</h1>
+            <i class="fa-solid <?= $editingCandidate ? 'fa-user-pen' : 'fa-user-plus' ?>"></i>
+            <h1><?= $editingCandidate ? 'Edit Calon Ketua OSIS' : 'Tambah Calon Ketua OSIS' ?></h1>
         </div>
         
         <?php if ($error): ?>
             <div class="alert-modern alert-error">
                 <i class="fa-solid fa-circle-exclamation fs-5"></i>
-                <div><?= htmlspecialchars($error) ?></div>
+                <div><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
             </div>
         <?php endif; ?>
         
         <?php if ($success): ?>
             <div class="alert-modern alert-success">
                 <i class="fa-solid fa-circle-check fs-5"></i>
-                <div><?= htmlspecialchars($success) ?></div>
+                <div><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
             </div>
         <?php endif; ?>
         
         <div class="form-card">
             <form method="POST" enctype="multipart/form-data" id="candidateForm">
                 <?= csrfField() ?>
+                <input type="hidden" name="action" value="save">
+                <?php if ($editingCandidate): ?>
+                    <input type="hidden" name="candidate_id" value="<?= (int) $editingCandidate['id'] ?>">
+                <?php endif; ?>
                 
                 <div class="form-grid">
                     
                     <div class="form-group full-width">
-                        <label>Foto Calon (Maks. 2MB, JPG/PNG)</label>
+                        <label>Foto Calon (Maks. 2MB, JPG/PNG<?= $editingCandidate ? ' — opsional saat edit' : '' ?>)</label>
                         <div class="upload-area">
-                            <input type="file" id="foto" name="foto" accept="image/*" required>
-                            <div class="upload-placeholder" id="uploadPlaceholder">
+                            <input type="file" id="foto" name="foto" accept="image/*" <?= $editingCandidate ? '' : 'required' ?>>
+                            <div class="upload-placeholder" id="uploadPlaceholder" <?= $editingCandidate ? 'style="display:none;"' : '' ?>>
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
                                 <span>Klik atau seret foto ke area ini</span>
                             </div>
-                            <img id="imagePreview" class="preview-image" alt="Preview Gambar">
+                            <img id="imagePreview" class="preview-image" alt="Preview Gambar"
+                                 <?php if ($editingCandidate): ?>
+                                     src="<?= BASE_URL ?>/assets/img/candidates/<?= htmlspecialchars($editingCandidate['foto'], ENT_QUOTES, 'UTF-8') ?>"
+                                     style="display:inline-block;"
+                                     onerror="this.onerror=null;this.src='<?= BASE_URL ?>/assets/img/default.jpg'"
+                                 <?php endif; ?>>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="nama">Nama Lengkap</label>
-                        <input type="text" id="nama" name="nama" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>" required>
+                        <input type="text" id="nama" name="nama" class="form-control" placeholder="Contoh: Budi Santoso" value="<?= htmlspecialchars($formValues['nama'], ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
 
                     <div class="form-group">
                         <label for="kelas">Kelas</label>
-                        <input type="text" id="kelas" name="kelas" class="form-control" placeholder="Contoh: XI RPL 1" value="<?= htmlspecialchars($_POST['kelas'] ?? '') ?>" required>
+                        <input type="text" id="kelas" name="kelas" class="form-control" placeholder="Contoh: XI RPL 1" value="<?= htmlspecialchars($formValues['kelas'], ENT_QUOTES, 'UTF-8') ?>" required>
                     </div>
 
                     <div class="form-group full-width">
                         <label for="visi">Visi</label>
-                        <textarea id="visi" name="visi" class="form-control" placeholder="Tuliskan visi calon di sini..." required><?= htmlspecialchars($_POST['visi'] ?? '') ?></textarea>
+                        <textarea id="visi" name="visi" class="form-control" placeholder="Tuliskan visi calon di sini..." required><?= htmlspecialchars($formValues['visi'], ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="misi">Misi</label>
-                        <textarea id="misi" name="misi" class="form-control" placeholder="Tuliskan misi calon (bisa menggunakan nomor urut)..." required><?= htmlspecialchars($_POST['misi'] ?? '') ?></textarea>
+                        <textarea id="misi" name="misi" class="form-control" placeholder="Tuliskan misi calon (bisa menggunakan nomor urut)..." required><?= htmlspecialchars($formValues['misi'], ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="Program">Program Unggulan</label>
-                        <textarea id="Program" name="Program" class="form-control" placeholder="Tuliskan program unggulan calon..." required><?= htmlspecialchars($_POST['Program'] ?? '') ?></textarea>
+                        <textarea id="Program" name="Program" class="form-control" placeholder="Tuliskan program unggulan calon..." required><?= htmlspecialchars($formValues['Program'], ENT_QUOTES, 'UTF-8') ?></textarea>
                     </div>
 
                 </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn-modern btn-primary-modern">
-                        <i class="fa-solid fa-save"></i> Simpan Data Calon
+                        <i class="fa-solid fa-save"></i> <?= $editingCandidate ? 'Simpan Perubahan' : 'Simpan Data Calon' ?>
                     </button>
-                    <a href="dashboard.php" class="btn-modern btn-secondary-modern">
-                        Batal & Kembali
-                    </a>
+                    <?php if ($editingCandidate): ?>
+                        <a href="tambah_calon.php" class="btn-modern btn-secondary-modern">
+                            Batal Edit
+                        </a>
+                    <?php else: ?>
+                        <a href="dashboard.php" class="btn-modern btn-secondary-modern">
+                            Batal & Kembali
+                        </a>
+                    <?php endif; ?>
                 </div>
 
             </form>
         </div>
 
+        <div class="form-card">
+            <h4 class="mb-3 fw-bold"><i class="fa-solid fa-users me-2 text-primary"></i>Daftar Kandidat Terdaftar (<?= count($candidatesList) ?>)</h4>
+            <?php if (empty($candidatesList)): ?>
+                <p class="text-muted mb-0">Belum ada kandidat terdaftar.</p>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nama</th>
+                                <th>Kelas</th>
+                                <th>Suara</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($candidatesList as $c): ?>
+                                <tr>
+                                    <td>
+                                        <img src="<?= BASE_URL ?>/assets/img/candidates/<?= htmlspecialchars($c['foto'], ENT_QUOTES, 'UTF-8') ?>"
+                                             alt="<?= htmlspecialchars($c['nama'], ENT_QUOTES, 'UTF-8') ?>"
+                                             class="candidate-thumb"
+                                             onerror="this.onerror=null;this.src='<?= BASE_URL ?>/assets/img/default.jpg'">
+                                    </td>
+                                    <td class="fw-semibold"><?= htmlspecialchars($c['nama'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= htmlspecialchars($c['kelas'], ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><span class="badge bg-light text-dark border"><?= (int) $c['total_suara'] ?></span></td>
+                                    <td class="text-end">
+                                        <a href="tambah_calon.php?edit=<?= (int) $c['id'] ?>" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </a>
+                                        <form method="POST" class="d-inline" onsubmit="return confirm('Hapus kandidat ini?');">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="candidate_id" value="<?= (int) $c['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int) $c['total_suara'] > 0 ? 'disabled title="Sudah memiliki suara"' : '' ?>>
+                                                <i class="fa-solid fa-trash"></i> Hapus
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+
     </div>
 
     <script>
-        // Script Preview Image yang diperbarui
         document.getElementById('foto').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const preview = document.getElementById('imagePreview');
@@ -417,17 +589,13 @@ include __DIR__ . '/../includes/header.php';
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     preview.style.display = 'inline-block';
-                    placeholder.style.display = 'none'; // Sembunyikan ikon awan
+                    placeholder.style.display = 'none';
                 }
                 
                 reader.readAsDataURL(file);
-            } else {
-                preview.style.display = 'none';
-                placeholder.style.display = 'block';
             }
         });
 
-        // Script Validasi Ukuran File
         document.getElementById('candidateForm').addEventListener('submit', function(e) {
             const fileInput = document.getElementById('foto');
             const maxSize = 2 * 1024 * 1024; // 2MB

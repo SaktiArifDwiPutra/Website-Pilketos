@@ -210,6 +210,13 @@ $extra_head = <<<'HTML'
             background: var(--primary);
             border-radius: 4px;
         }
+
+        @media print {
+            header, footer, .back-to-top, .no-print { display: none !important; }
+            .page-banner { padding: 20px; border-radius: 0; color: #0f172a; background: none; }
+            .content-wrapper { margin-top: 0; }
+            .modern-card { box-shadow: none; border: 1px solid #e2e8f0; }
+        }
     </style>
 HTML;
 include '../includes/header.php';
@@ -229,8 +236,16 @@ include '../includes/header.php';
                 <h2>Total Suara Masuk</h2>
                 <p class="angka"><?= number_format($total_votes, 0, ',', '.') ?></p>
             </div>
-            <div class="total-votes-icon">
-                <i class="fa-solid fa-check-to-slot"></i>
+            <div class="d-flex align-items-center gap-2 no-print">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="window.location.reload()">
+                    <i class="fa-solid fa-rotate me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                    <i class="fa-solid fa-print me-1"></i> Cetak
+                </button>
+                <div class="total-votes-icon ms-2">
+                    <i class="fa-solid fa-check-to-slot"></i>
+                </div>
             </div>
         </div>
         

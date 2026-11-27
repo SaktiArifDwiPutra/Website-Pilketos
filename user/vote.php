@@ -13,6 +13,7 @@ $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
 $status = $_GET['status'] ?? '';
+$electionStatus = getElectionStatus($pdo);
 
 if ($user && $user['sudah_vote'] && $status !== 'success') {
     header('Location: ' . BASE_URL . '/user/dashboard.php?status=done');
@@ -23,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['candidate_id'])) {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
         http_response_code(403);
         $error = "Sesi formulir tidak valid. Silakan muat ulang halaman dan coba lagi.";
+    } elseif (!$electionStatus['is_open']) {
+        http_response_code(403);
+        $error = $electionStatus['banner_text'];
     } else {
         $candidate_id = filter_input(INPUT_POST, 'candidate_id', FILTER_VALIDATE_INT);
 
@@ -90,6 +94,12 @@ include __DIR__ . '/../includes/header.php';
                 <h1 class="mb-3">Voting Berhasil!</h1>
                 <p>Terima kasih telah berpartisipasi dalam pemilihan ketua OSIS.</p>
                 <a href="<?= BASE_URL ?>/user/dashboard.php" class="btn btn-success mt-3">Kembali ke Dashboard</a>
+            </div>
+        <?php elseif (!$electionStatus['is_open']): ?>
+            <div class="alert alert-warning text-center p-4 shadow-sm">
+                <h1 class="mb-3">Pemungutan Suara Ditutup</h1>
+                <p><?= htmlspecialchars($electionStatus['banner_text'], ENT_QUOTES, 'UTF-8') ?></p>
+                <a href="<?= BASE_URL ?>/user/dashboard.php" class="btn btn-primary mt-3">Kembali ke Dashboard</a>
             </div>
         <?php else: ?>
             <h1 class="mb-4 text-center">Pemilihan Ketua OSIS</h1>

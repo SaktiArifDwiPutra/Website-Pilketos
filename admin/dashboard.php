@@ -4,12 +4,44 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/cekuser.php';
 requireAdmin();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_settings') {
+    if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+        header('Location: dashboard.php?settings_error=Token+keamanan+tidak+valid');
+        exit;
+    }
+
+    $electionTitle = trim((string) ($_POST['election_title'] ?? ''));
+    $votingStartRaw = trim((string) ($_POST['voting_start'] ?? ''));
+    $votingEndRaw = trim((string) ($_POST['voting_end'] ?? ''));
+    $isVotingOpen = isset($_POST['is_voting_open']) && $_POST['is_voting_open'] === '1' ? 1 : 0;
+
+    if ($electionTitle === '') {
+        header('Location: dashboard.php?settings_error=Judul+pemilihan+tidak+boleh+kosong');
+        exit;
+    }
+
+    $votingStart = $votingStartRaw !== '' ? date('Y-m-d H:i:s', strtotime($votingStartRaw)) : null;
+    $votingEnd = $votingEndRaw !== '' ? date('Y-m-d H:i:s', strtotime($votingEndRaw)) : null;
+
+    if ($votingStart !== null && $votingEnd !== null && strtotime($votingEnd) < strtotime($votingStart)) {
+        header('Location: dashboard.php?settings_error=Waktu+selesai+tidak+boleh+lebih+awal+dari+waktu+mulai');
+        exit;
+    }
+
+    $stmt = $pdo->prepare("UPDATE election_settings SET election_title = ?, voting_start = ?, voting_end = ?, is_voting_open = ? WHERE id = 1");
+    $stmt->execute([$electionTitle, $votingStart, $votingEnd, $isVotingOpen]);
+
+    header('Location: dashboard.php?settings_saved=1');
+    exit;
+}
+
 $page_title = "Dashboard Admin";
 
 // Ambil statistik sederhana untuk ditampilkan di dashboard (Opsional tapi keren)
 $total_kandidat = $pdo->query("SELECT COUNT(*) FROM candidates")->fetchColumn();
 $total_pemilih = $pdo->query("SELECT COUNT(*) FROM users WHERE role IN ('siswa', 'guru')")->fetchColumn();
 $suara_masuk = $pdo->query("SELECT COUNT(*) FROM votes")->fetchColumn();
+$electionSettings = getElectionStatus($pdo);
 
 $extra_head = <<<'HTML'
     <style>
@@ -228,9 +260,63 @@ include '../includes/header.php';
 
         </div>
 
-        <div class="row mb-5">
-            <div class="col-12 col-md-8 col-lg-6 mx-auto">
-                <div class="card password-card">
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-lg-6">
+                <div class="card password-card h-100">
+                    <div class="card-body">
+                        <h4 class="mb-1" style="font-weight: 700; color: var(--text-main);">
+                            <i class="fa-solid fa-calendar-check text-muted me-2"></i>Pengaturan Pemilihan
+                        </h4>
+                        <p class="text-muted mb-4" style="font-size: 0.9rem;">Atur jadwal dan status buka/tutup pemungutan suara.</p>
+
+                        <?php if (isset($_GET['settings_error'])): ?>
+                            <div class="alert alert-danger alert-custom">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <?= htmlspecialchars($_GET['settings_error'], ENT_QUOTES, 'UTF-8') ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (isset($_GET['settings_saved'])): ?>
+                            <div class="alert alert-success alert-custom">
+                                <i class="fa-solid fa-circle-check"></i>
+                                Pengaturan pemilihan berhasil disimpan!
+                            </div>
+                        <?php endif; ?>
+
+                        <form method="POST" action="dashboard.php">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="update_settings">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="election_title">Judul Pemilihan</label>
+                                <input type="text" id="election_title" name="election_title" class="form-control" value="<?= htmlspecialchars($electionSettings['election_title'], ENT_QUOTES, 'UTF-8') ?>" required>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-12 col-sm-6">
+                                    <label class="form-label fw-semibold" for="voting_start">Waktu Mulai (Opsional)</label>
+                                    <input type="datetime-local" id="voting_start" name="voting_start" class="form-control" value="<?= $electionSettings['voting_start'] ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($electionSettings['voting_start'])), ENT_QUOTES, 'UTF-8') : '' ?>">
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <label class="form-label fw-semibold" for="voting_end">Waktu Selesai (Opsional)</label>
+                                    <input type="datetime-local" id="voting_end" name="voting_end" class="form-control" value="<?= $electionSettings['voting_end'] ? htmlspecialchars(date('Y-m-d\TH:i', strtotime($electionSettings['voting_end'])), ENT_QUOTES, 'UTF-8') : '' ?>">
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold" for="is_voting_open">Status Voting</label>
+                                <select id="is_voting_open" name="is_voting_open" class="form-select">
+                                    <option value="1" <?= $electionSettings['is_voting_open'] === 1 ? 'selected' : '' ?>>Dibuka (Aktif)</option>
+                                    <option value="0" <?= $electionSettings['is_voting_open'] === 0 ? 'selected' : '' ?>>Ditutup</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-update w-100">
+                                Simpan Pengaturan Pemilihan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="card password-card h-100">
                     <div class="card-body">
                         <h4 class="mb-1" style="font-weight: 700; color: var(--text-main);">
                             <i class="fa-solid fa-lock text-muted me-2"></i>Keamanan Akun
@@ -240,7 +326,7 @@ include '../includes/header.php';
                         <?php if (isset($_GET['error'])): ?>
                             <div class="alert alert-danger alert-custom">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                <?= htmlspecialchars($_GET['error']) ?>
+                                <?= htmlspecialchars($_GET['error'], ENT_QUOTES, 'UTF-8') ?>
                             </div>
                         <?php endif; ?>
                         
@@ -288,10 +374,12 @@ include '../includes/header.php';
         // Membersihkan URL dari parameter ?success/error setelah 3 detik
         if(window.history.replaceState) {
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('success') || urlParams.has('error')) {
+            if (urlParams.has('success') || urlParams.has('error') || urlParams.has('settings_saved') || urlParams.has('settings_error')) {
                 setTimeout(() => {
                     urlParams.delete('success');
                     urlParams.delete('error');
+                    urlParams.delete('settings_saved');
+                    urlParams.delete('settings_error');
                     const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
                     window.history.replaceState(null, '', newUrl);
                 }, 3000);
